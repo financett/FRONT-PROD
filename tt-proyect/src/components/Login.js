@@ -81,7 +81,7 @@ const Login = () => {
             />
             <span className="highlight-login"></span>
             <span className="bar-login"></span>
-            <label><i className="bi bi-envelope"></i> &nbsp; Correo</label>
+            <label><i className="bi bi-envelope"></i> &nbsp; Correo PRUEBA</label>
           </div><br />
           <div className="group-material-login">
             <input 
