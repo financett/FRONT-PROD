@@ -45,9 +45,9 @@ function App() {
             <Route path="add-income" element={<AddIncome />} />
             <Route path="add-expense" element={<AddExpense />} />
             <Route path="grupo/crear" element={<CreateGroup />} /> {/* Nueva ruta */}
-            <Route path="/dashboard/validar-datos-financieros" element={<CheckFinancialData />} /> 
-            <Route path="/dashboard/metas-financieras" element={<FinancialGoals />} />
-            <Route path="/dashboard/registrar-meta" element={<RegisterGoal />} />
+            <Route path="validar-datos-financieros" element={<CheckFinancialData />} /> 
+            <Route path="metas-financieras" element={<FinancialGoals />} />
+            <Route path="registrar-meta" element={<RegisterGoal />} />
           </Route>
         </Routes>
       </div>
