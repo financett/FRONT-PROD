@@ -9,12 +9,17 @@ import NewLayout from './components/NewLayout';
 import Register from './components/Register';
 import PrivateRoute from './components/PrivateRoute';
 import EmailVerification from './components/EmailVerification';
-import IncomeChart from './components/IncomeChart';  // Importa el componente de IncomeChart
-import EditIncome from './components/EditIncome';  // Importa el componente de edición de ingresos
+import FinancialOverview from './components/FinancialOverview';  // Importa el nuevo componente
+import EditIncome from './components/EditIncome'; 
 import IncomeDashboard from './components/IncomeDashboard';
-import AddIncome from './components/AddIncomeModal';  // Componente de agregar ingreso
-
-
+import AddIncome from './components/AddIncomeModal';
+import ExpenseDashboard from './components/ExpenseDashboard';
+import AddExpense from './components/AddExpenseModal';
+import CreateGroup from './components/CreateGroup';
+//import AddExpense from './components/AddExpenseModal';
+import FinancialGoals from './components/FinancialGoals';
+import RegisterGoal from './components/RegisterGoal';
+import CheckFinancialData from './components/CheckFinancialData';
 
 function App() {
   return (
@@ -33,10 +38,16 @@ function App() {
               <NewLayout />
             </PrivateRoute>
           }>
-            <Route path="inicio" element={<IncomeChart />} /> 
-            <Route path="ingresos" element={<IncomeDashboard />} /> {/* Nuevo componente */}
-            <Route path="/dashboard/edit-income/:id" element={<EditIncome />} />
-            <Route path="/dashboard/add-income" element={<AddIncome />} />  
+            <Route path="inicio" element={<FinancialOverview />} /> {/* Cambia a FinancialOverview */}
+            <Route path="ingresos" element={<IncomeDashboard />} />
+            <Route path="gastos" element={<ExpenseDashboard />} />
+            <Route path="edit-income/:id" element={<EditIncome />} />
+            <Route path="add-income" element={<AddIncome />} />
+            <Route path="add-expense" element={<AddExpense />} />
+            <Route path="grupo/crear" element={<CreateGroup />} /> {/* Nueva ruta */}
+            <Route path="/dashboard/validar-datos-financieros" element={<CheckFinancialData />} /> 
+            <Route path="/dashboard/metas-financieras" element={<FinancialGoals />} />
+            <Route path="/dashboard/registrar-meta" element={<RegisterGoal />} />
           </Route>
         </Routes>
       </div>

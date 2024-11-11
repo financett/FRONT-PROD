@@ -12,6 +12,10 @@ const NewLayout = () => {
   const [activeMenu, setActiveMenu] = useState(null);
   const [descripcionIngreso, setDescripcionIngreso] = useState('');
   const [fechaUltimoIngreso, setFechaUltimoIngreso] = useState('');
+  const [perteneceAGrupo, setPerteneceAGrupo] = useState(false);
+  const [esAdminGrupo, setEsAdminGrupo] = useState(false);
+  const [misGrupos, setMisGrupos] = useState([]);
+  const [gruposAdmin, setGruposAdmin] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,15 +34,24 @@ const NewLayout = () => {
       navigate('/');
     }
 
-    // Cargar los valores iniciales desde el localStorage
+    // Obtener valores de login desde localStorage
     const hasIncome = localStorage.getItem('hasIncome') === 'true';
     const showIncomeTab = localStorage.getItem('showFloatingTabIncome') === 'true';
+    const perteneceAGrupoLocal = localStorage.getItem('pertenece_a_grupo') === 'true';
+    const esAdminGrupoLocal = localStorage.getItem('es_admin_grupo') === 'true';
 
-    // Si no tiene ingresos, mostrar la ventana flotante para registrar el ingreso inicial
+    setPerteneceAGrupo(perteneceAGrupoLocal);
+    setEsAdminGrupo(esAdminGrupoLocal);
+
+    const gruposUsuario = JSON.parse(localStorage.getItem('mis_grupos') || '[]');
+    const gruposAdministrador = JSON.parse(localStorage.getItem('grupos_admin') || '[]');
+
+    setMisGrupos(gruposUsuario);
+    setGruposAdmin(gruposAdministrador);
+
     if (!hasIncome) {
       setShowFloatingTab(true);
     } else if (showIncomeTab) {
-      // Si se necesita actualizar ingresos periódicos
       setDescripcionIngreso(localStorage.getItem('descripcionIngreso') || '');
       setFechaUltimoIngreso(localStorage.getItem('fechaUltimoIngreso') || '');
       setShowFloatingTabIncome(true);
@@ -47,16 +60,12 @@ const NewLayout = () => {
 
   const handleSave = () => {
     setShowFloatingTab(false);
-
-    // Actualizar el estado de ingresos en localStorage una vez que se registra un ingreso
     localStorage.setItem('hasIncome', 'true');
-    localStorage.removeItem('showFloatingTab'); // Eliminar cualquier valor previo
+    localStorage.removeItem('showFloatingTab');
   };
 
   const handleSaveIncome = () => {
     setShowFloatingTabIncome(false);
-
-    // Actualizar el estado de la ventana flotante de ingreso periódico
     localStorage.setItem('showFloatingTabIncome', 'false');
   };
 
@@ -76,64 +85,63 @@ const NewLayout = () => {
         </div>
         <div className="sidebar-content">
           <ul className="nav-menu nav-lateral-list-menu">
-            {/* Inicio */}
             <li className={`menu-item ${activeMenu === 'inicio' ? 'active' : ''}`}>
               <Link to="/dashboard/inicio" onClick={() => setActiveMenu('inicio')}>
                 <i className="bi bi-house"></i> Inicio
               </Link>
             </li>
 
-            {/* Tus Finanzas */}
             <li className={`menu-item ${activeMenu === 'finanzas' ? 'active' : ''}`} onClick={() => toggleMenu('finanzas')}>
               <div className="dropdown-menu-button">
                 <i className="bi bi-graph-up"></i> Tus Finanzas <i className={`bi bi-chevron-${activeMenu === 'finanzas' ? 'up' : 'down'}`}></i>
               </div>
               <ul className={`dropdown-menu ${activeMenu === 'finanzas' ? 'show' : ''}`}>
-                <li><Link to="/dashboard/ingresos">Ingresos</Link></li> {/* Enlace a IncomeList */}
+                <li><Link to="/dashboard/ingresos">Ingresos</Link></li>
                 <li><Link to="/dashboard/gastos">Gastos</Link></li>
                 <li><Link to="/dashboard/ahorros">Ahorros</Link></li>
                 <li><Link to="/dashboard/inversiones">Inversiones</Link></li>
               </ul>
             </li>
 
-            {/* Grupos Financieros */}
             <li className={`menu-item ${activeMenu === 'grupo' ? 'active' : ''}`} onClick={() => toggleMenu('grupo')}>
               <div className="dropdown-menu-button">
                 <i className="bi bi-people"></i> Grupos Financieros <i className={`bi bi-chevron-${activeMenu === 'grupo' ? 'up' : 'down'}`}></i>
               </div>
               <ul className={`dropdown-menu ${activeMenu === 'grupo' ? 'show' : ''}`}>
-                <li><Link to="/dashboard/grupo/mis-grupos">Mis Grupos</Link></li>
+                <li className="submenu-item">
+                  <span>Mis Grupos {'>'}</span>
+                  <ul className="submenu">
+                    {misGrupos.map((grupo) => (
+                      <li key={grupo.ID_Grupo}><Link to={`/dashboard/grupo/${grupo.ID_Grupo}`}>{grupo.Nombre_Grupo}</Link></li>
+                    ))}
+                  </ul>
+                </li>
                 <li><Link to="/dashboard/grupo/crear">Crear Grupo</Link></li>
                 <li><Link to="/dashboard/grupo/unirse">Unirse a un Grupo</Link></li>
-                <li><Link to="/dashboard/grupo/configurar">Configuración de Grupo</Link></li>
-              </ul>
-            </li>
-
-            {/* Metas Financieras */}
-            <li className={`menu-item ${activeMenu === 'metas' ? 'active' : ''}`} onClick={() => toggleMenu('metas')}>
-              <div className="dropdown-menu-button">
-                <i className="bi bi-check-square"></i> Metas Financieras <i className={`bi bi-chevron-${activeMenu === 'metas' ? 'up' : 'down'}`}></i>
-              </div>
-              <ul className={`dropdown-menu ${activeMenu === 'metas' ? 'show' : ''}`}>
-                <li><Link to="/dashboard/metas/registro">Registro de Metas</Link></li>
-                <li><Link to="/dashboard/metas/seguimiento">Seguimiento de Metas</Link></li>
-                <li><Link to="/dashboard/metas/analisis">Análisis de Metas</Link></li>
+                {esAdminGrupo && (
+                  <li className="submenu-item">
+                    <span>Configuración de Grupo {'>'}</span>
+                    <ul className="submenu">
+                      {gruposAdmin.map((grupo) => (
+                        <li key={grupo.ID_Grupo}><Link to={`/dashboard/grupo/configurar/${grupo.ID_Grupo}`}>{grupo.Nombre_Grupo}</Link></li>
+                      ))}
+                    </ul>
+                  </li>
+                )}
               </ul>
             </li>
           </ul>
         </div>
       </aside>
       <div className="main-content">
-        <header className="top-bar">
-          {/* Aquí puedes añadir contenido de la barra superior si es necesario */}
-        </header>
+        <header className="top-bar"></header>
         <main className="content">
           {showFloatingTab && <FloatingTab onSave={handleSave} />}
           {showFloatingTabIncome && (
-            <FloatingTabIncome 
-              onSave={handleSaveIncome} 
-              descripcionIngreso={descripcionIngreso} 
-              fechaUltimoIngreso={fechaUltimoIngreso} 
+            <FloatingTabIncome
+              onSave={handleSaveIncome}
+              descripcionIngreso={descripcionIngreso}
+              fechaUltimoIngreso={fechaUltimoIngreso}
             />
           )}
           <Outlet />
