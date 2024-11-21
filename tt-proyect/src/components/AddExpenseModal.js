@@ -49,7 +49,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `https://back-flask-6q6j.onrender.com/api/subcategorias/${category}`,
+        `http://127.0.0.1:5000/api/subcategorias/${category}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -100,7 +100,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
         periodico: expenseData.Periodico,
       };
 
-      await axios.post('https://back-flask-6q6j.onrender.com/api/gasto', payload, {
+      await axios.post('http://127.0.0.1:5000/api/gasto', payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -126,6 +126,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
 
         <div className="form-group checkbox-group">
           <label htmlFor="UniqueExpense">Es Gasto Único</label>
+
           <input
             type="checkbox"
             id="UniqueExpense"
@@ -138,6 +139,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
 
         <div className="form-group">
           <label htmlFor="Categoria">Categoría</label>
+          <br></br><br></br>
           <select
             id="Categoria"
             name="Categoria"
@@ -155,6 +157,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
 
         <div className="form-group">
           <label htmlFor="ID_Subcategoria">Subcategoría</label>
+          <br></br><br></br>
           <select
             id="ID_Subcategoria"
             name="ID_Subcategoria"
@@ -174,6 +177,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
 
         <div className="form-group">
           <label htmlFor="Descripcion">Descripción</label>
+          <br></br><br></br>
           <input
             type="text"
             id="Descripcion"
@@ -187,6 +191,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
 
         <div className="form-group">
           <label htmlFor="Monto">Monto</label>
+          <br></br><br></br>
           <input
             type="text"
             id="Monto"
@@ -200,6 +205,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
 
         <div className="form-group">
           <label htmlFor="Fecha">Fecha</label>
+          <br></br><br></br>
           <input
             type="date"
             id="Fecha"
@@ -214,6 +220,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
         {!isUniqueExpense && (
           <div className="form-group">
             <label htmlFor="Periodicidad">Periodicidad</label>
+            <br></br><br></br>
             <select
               id="Periodicidad"
               name="Periodicidad"

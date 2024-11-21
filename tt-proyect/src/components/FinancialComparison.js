@@ -25,10 +25,10 @@ const GeneralFinancialComparison = () => {
 
       // Llamada para todos los ingresos y gastos
       const [ingresosResponse, gastosResponse] = await Promise.all([
-        axios.get('https://back-flask-6q6j.onrender.com/api/ingresos', {
+        axios.get('http://127.0.0.1:5000/api/ingresos', {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get('https://back-flask-6q6j.onrender.com/api/gastos', {
+        axios.get('http://127.0.0.1:5000/api/gastos', {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);

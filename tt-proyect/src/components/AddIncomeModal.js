@@ -72,7 +72,7 @@ const AddIncomeModal = ({ onClose, onSave }) => {
         es_periodico: incomeData.EsPeriodico,
       };
 
-      await axios.post('https://back-flask-6q6j.onrender.com/api/ingreso', payload, {
+      await axios.post('http://127.0.0.1:5000/api/ingreso', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

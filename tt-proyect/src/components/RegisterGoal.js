@@ -25,13 +25,13 @@ const RegisterGoal = () => {
   const fetchPromedios = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('https://back-flask-6q6j.onrender.com/api/promedios', {
+      const response = await axios.get('http://127.0.0.1:5000/api/promedios', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPromedios(response.data);
       if (response.data.disponible_para_metas < 0) {
         //alert("Se recomienda que tengas más ingresos que gastos para una mejor gestión financiera.");
-        navigate('/'); // Redirigir a la página principal
+        navigate('/dashboard/inicio'); // Redirigir a la página principal
       }
     } catch (error) {
       console.error('Error al obtener los promedios', error);
@@ -119,7 +119,7 @@ const RegisterGoal = () => {
         fechaTermino,
         ahorroMensual
       };
-      await axios.post('https://back-flask-6q6j.onrender.com/api/metas', data, {
+      await axios.post('http://127.0.0.1:5000/api/metas', data, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       navigate('/dashboard/metas-financieras');

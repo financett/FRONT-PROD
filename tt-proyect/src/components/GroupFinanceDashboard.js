@@ -2,22 +2,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import ConfirmationModal from './ConfirmationModal';
 import FilterModal from './FilterModal';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import '../styles/ExpenseDashboard.css';
+import '../styles/ExpenseDashboard.css'; // Reutilizamos los estilos
 import CustomToolbar from './CustomToolbar';
 
 Chart.register(ArcElement, Tooltip, Legend);
 
 const localizer = momentLocalizer(moment);
 
-const ExpenseDashboard = () => {
-  const [expenses, setExpenses] = useState([]);
+const GroupFinanceDashboard = () => {
+  const [groupExpenses, setGroupExpenses] = useState([]);
   const [events, setEvents] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
@@ -27,13 +26,14 @@ const ExpenseDashboard = () => {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [groupName, setGroupName] = useState('');
+  const [groupDescription, setGroupDescription] = useState('');
   const navigate = useNavigate();
+  const { grupoId } = useParams(); // Obtener el ID del grupo desde la URL
 
   const transformExpensesToEvents = (expenses) => {
     return expenses.map((expense) => {
       const fecha = new Date(expense.Fecha);
-      fecha.setDate(fecha.getDate() + 1);
-
       return {
         id: expense.ID_Gasto,
         title: expense.Descripcion,
@@ -44,7 +44,7 @@ const ExpenseDashboard = () => {
     });
   };
 
-  const fetchExpenses = useCallback(async (filters = {}) => {
+  const fetchGroupInfo = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -52,58 +52,93 @@ const ExpenseDashboard = () => {
         return;
       }
 
-      const decodedToken = jwtDecode(token);
-      const userID = localStorage.getItem('userID');
+      const response = await axios.get(`http://127.0.0.1:5000/api/grupo/${grupoId}/info`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setGroupName(response.data.Nombre_Grupo || 'Grupo');
+      setGroupDescription(response.data.Descripcion || 'Sin descripción');
+    } catch (error) {
+      console.error('Error al obtener la información del grupo:', error);
+      navigate('/'); // Redirigir si hay un error crítico
+    }
+  }, [grupoId, navigate]);
 
-      if (decodedToken.exp * 1000 < Date.now()) {
-        localStorage.clear();
+  const fetchGroupExpenses = useCallback(async (filters = {}) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
         navigate('/');
         return;
       }
 
-      const response = await axios.get('http://127.0.0.1:5000/api/user/gastos', {
+      const response = await axios.get(`http://127.0.0.1:5000/api/grupo/${grupoId}/gastos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const expensesData = response.data;
-      setExpenses(expensesData);
 
-      const events = transformExpensesToEvents(expensesData);
+      // Mapear los datos a los nombres de campos esperados
+      const expenses = response.data.map(expense => ({
+        ID_Gasto: expense.ID_Gasto_Grupal, // Renombrar campo
+        Descripcion: expense.Descripcion,
+        Monto: expense.Monto,
+        Fecha: expense.Fecha,
+        Responsable: expense.Responsable, // Ahora obtenemos el campo directamente
+        Estado: expense.Estado,
+      }));
+
+      setGroupExpenses(expenses);
+
+      const events = transformExpensesToEvents(expenses);
       setEvents(events);
-
-      const chartResponse = await axios.post(
-        'http://127.0.0.1:5000/api/gasto/filtered',
-        {
-          user_id: userID,
-          ...filters,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const expenseData = chartResponse.data;
-      const data = {
-        labels: expenseData.map((item) => item.Descripcion),
-        datasets: [
-          {
-            label: 'Tus gastos',
-            data: expenseData.map((item) => item.Monto),
-            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
-          },
-        ],
-      };
-      setChartData(data);
     } catch (error) {
-      console.error('Error al obtener los datos', error);
+      console.error('Error al obtener los datos del grupo:', error);
     }
-  }, [navigate]);
+  }, [navigate, grupoId]);
+
+  const fetchChartData = useCallback(async (filters = {}) => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/');
+            return;
+        }
+
+        const response = await axios.post(
+            `http://127.0.0.1:5000/api/grupo/${grupoId}/gastos/filtrados`,
+            {
+                ...filters, // Enviar filtros al backend
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        const expenseData = response.data;
+
+        const data = {
+            labels: expenseData.map((item) => item.Descripcion),
+            datasets: [
+                {
+                    label: 'Gastos del grupo',
+                    data: expenseData.map((item) => item.Monto),
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+                },
+            ],
+        };
+
+        setChartData(data);
+    } catch (error) {
+        console.error('Error al obtener los datos para la gráfica:', error);
+    }
+}, [grupoId, navigate]);
 
   useEffect(() => {
-    fetchExpenses();
-  }, [fetchExpenses]);
+    fetchGroupInfo();
+    fetchGroupExpenses();
+    fetchChartData();
+  }, [fetchGroupInfo, fetchGroupExpenses, fetchChartData]);
 
   const handleDelete = (id) => {
     setExpenseToDelete(id);
@@ -115,14 +150,14 @@ const ExpenseDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://127.0.0.1:5000/api/gasto/${expenseToDelete}`, {
+      await axios.delete(`http://127.0.0.1:5000/api/grupo/${grupoId}/gastos/${expenseToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setExpenses(expenses.filter((expense) => expense.ID_Gasto !== expenseToDelete));
+      setGroupExpenses(groupExpenses.filter((expense) => expense.ID_Gasto !== expenseToDelete));
       setShowModal(false);
       setExpenseToDelete(null);
     } catch (error) {
-      console.error('Error al eliminar el gasto', error);
+      console.error('Error al eliminar el gasto del grupo:', error);
     }
   };
 
@@ -132,7 +167,7 @@ const ExpenseDashboard = () => {
   };
 
   const handleEdit = (idGasto) => {
-    navigate(`/dashboard/edit-expense/${idGasto}`);
+    navigate(`/dashboard/grupo/${grupoId}/edit-expense/${idGasto}`);
   };
 
   const handleEventClick = (event, e) => {
@@ -164,13 +199,15 @@ const ExpenseDashboard = () => {
 
   const handleApplyFilters = (filters) => {
     setCurrentFilters(filters);
-    fetchExpenses(filters);
+    fetchGroupExpenses(filters);
+    fetchChartData(); // Actualizar gráfica al aplicar filtros
     setShowFilterModal(false);
   };
 
   const handleClearFilters = () => {
     setCurrentFilters({});
-    fetchExpenses();
+    fetchGroupExpenses();
+    fetchChartData(); // Actualizar gráfica al limpiar filtros
     setShowFilterModal(false);
   };
 
@@ -183,13 +220,14 @@ const ExpenseDashboard = () => {
   };
 
   const handleAddExpenseClick = () => {
-    navigate('/dashboard/add-expense', { state: { selectedDate } });
+    navigate(`/dashboard/grupo/${grupoId}/add-expense`, { state: { selectedDate } });
     setPopoverPosition(null);
   };
 
   return (
     <div className="expense-dashboard-container">
-      <h2 className="expense-dashboard-title">Tus Gastos</h2>
+      <h2 className="expense-dashboard-title">{groupName}</h2>
+      <p className="group-description">{groupDescription}</p>
 
       <div className="expense-chart-section">
         <div className="chart-and-buttons">
@@ -211,7 +249,7 @@ const ExpenseDashboard = () => {
 
             <button
               className="btn btn-primary add-expense-button"
-              onClick={() => navigate('/dashboard/add-expense')}
+              onClick={() => navigate(`/dashboard/grupo/${grupoId}/add-expense`)}
             >
               <i className="bi bi-plus"></i> Agregar Gasto
             </button>
@@ -232,63 +270,6 @@ const ExpenseDashboard = () => {
               selectable
             />
           </div>
-
-          {selectedExpense && popoverPosition && (
-            <div
-              className="event-popover"
-              style={{
-                position: 'absolute',
-                top: `${popoverPosition.top}px`,
-                left: `${popoverPosition.left}px`,
-                backgroundColor: '#fff',
-                border: '1px solid #ccc',
-                padding: '10px',
-                zIndex: 100,
-              }}
-            >
-              <button
-                className="btn btn-warning btn-sm"
-                onClick={() => handleEdit(selectedExpense)}
-              >
-                Editar
-              </button>
-              <button
-                className="btn btn-danger btn-sm"
-                onClick={() => handleDelete(selectedExpense)}
-              >
-                Eliminar
-              </button>
-              <button className="btn btn-secondary btn-sm" onClick={closePopover}>
-                Cerrar
-              </button>
-            </div>
-          )}
-
-          {selectedDate && popoverPosition && (
-            <div
-              className="event-popover"
-              style={{
-                position: 'absolute',
-                top: `${popoverPosition.top}px`,
-                left: `${popoverPosition.left}px`,
-                backgroundColor: '#fff',
-                border: '1px solid #ccc',
-                padding: '10px',
-                zIndex: 100,
-              }}
-            >
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={handleAddExpenseClick}
-                
-              >
-                Agregar Gasto
-              </button>
-              <button className="btn btn-secondary btn-sm" onClick={closePopover}>
-                Cerrar
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -298,35 +279,20 @@ const ExpenseDashboard = () => {
             <tr>
               <th>Descripción</th>
               <th>Monto</th>
-              <th>Categoría</th>
-              <th>Subcategoría</th>
-              <th>Periodicidad</th>
-              <th>Es Único</th> {/* Cambiar a "Es Único" */}
+              <th>Responsable</th>
+              <th>Estado</th>
               <th>Fecha</th>
-              <th>Periódico/Único</th>
-              <th>Editar</th>
               <th>Eliminar</th>
             </tr>
           </thead>
           <tbody>
-            {expenses.map((expense) => (
+            {groupExpenses.map((expense) => (
               <tr key={expense.ID_Gasto}>
                 <td>{expense.Descripcion}</td>
                 <td>{expense.Monto}</td>
-                <td>{expense.Categoria}</td>
-                <td>{expense.Subcategoria || "N/A"}</td>
-                <td>{expense.Periodicidad || "N/A"}</td>
-                <td>{expense.Periodico === 0 ? 'Sí' : 'No'}</td> {/* Mostrar "Sí" si es único */}
+                <td>{expense.Responsable}</td>
+                <td>{expense.Estado}</td>
                 <td>{new Date(expense.Fecha).toISOString().split('T')[0]}</td>
-                <td>{expense.Periodico ? 'Periódico' : 'Único'}</td>
-                <td>
-                  <button
-                    className="btn btn-warning btn-sm"
-                    onClick={() => handleEdit(expense.ID_Gasto)}
-                  >
-                    <i className="bi bi-pencil-square"></i>
-                  </button>
-                </td>
                 <td>
                   <button
                     className="btn btn-danger btn-sm"
@@ -361,4 +327,4 @@ const ExpenseDashboard = () => {
   );
 };
 
-export default ExpenseDashboard;
+export default GroupFinanceDashboard;

@@ -20,6 +20,10 @@ import CreateGroup from './components/CreateGroup';
 import FinancialGoals from './components/FinancialGoals';
 import RegisterGoal from './components/RegisterGoal';
 import CheckFinancialData from './components/CheckFinancialData';
+import Grupos from './components/Grupos'; // Importa el componente Grupos
+import DetalleMeta from './components/DetalleMeta';
+import GroupFinanceDashboard from './components/GroupFinanceDashboard'; // Importa el componente
+import AddGroupExpense from './components/AddGroupExpense'; // Importa el componente
 
 function App() {
   return (
@@ -45,10 +49,14 @@ function App() {
             <Route path="add-income" element={<AddIncome />} />
             <Route path="add-expense" element={<AddExpense />} />
             <Route path="grupo/crear" element={<CreateGroup />} /> {/* Nueva ruta */}
-            <Route path="validar-datos-financieros" element={<CheckFinancialData />} /> 
-            <Route path="metas-financieras" element={<FinancialGoals />} />
-            <Route path="registrar-meta" element={<RegisterGoal />} />
-          </Route>
+            <Route path="listado_grupos" element={<Grupos />} /> {/* Ruta de Grupos */}
+            <Route path="/dashboard/validar-datos-financieros" element={<CheckFinancialData />} /> 
+            <Route path="/dashboard/metas-financieras" element={<FinancialGoals />} />
+            <Route path="/dashboard/registrar-meta" element={<RegisterGoal />} />
+            <Route path="/dashboard/metas/:idMeta" element={<DetalleMeta />} />
+            <Route path="/dashboard/grupo/:grupoId" element={<GroupFinanceDashboard />}/>
+            <Route path="/dashboard/grupo/:grupoId/add-expense" element={<AddGroupExpense />} />
+            </Route>
         </Routes>
       </div>
     </Router>
