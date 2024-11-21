@@ -25,7 +25,7 @@ const RegisterGoal = () => {
   const fetchPromedios = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://127.0.0.1:5000/api/promedios', {
+      const response = await axios.get('https://back-flask-6q6j.onrender.com/api/promedios', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPromedios(response.data);
@@ -119,7 +119,7 @@ const RegisterGoal = () => {
         fechaTermino,
         ahorroMensual
       };
-      await axios.post('http://127.0.0.1:5000/api/metas', data, {
+      await axios.post('https://back-flask-6q6j.onrender.com/api/metas', data, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       navigate('/dashboard/metas-financieras');

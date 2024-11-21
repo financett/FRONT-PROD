@@ -50,7 +50,7 @@ const FloatingTabIncome = ({ onSave, descripcionIngreso, fechaUltimoIngreso }) =
     if (amount) {
       try {
         // Realizar la solicitud POST para agregar un nuevo ingreso con la misma descripción
-        const response = await axios.post('http://127.0.0.1:5000/api/ingreso', {
+        const response = await axios.post('https://back-flask-6q6j.onrender.com/api/ingreso', {
           id_usuario: userID,
           monto: amount,
           descripcion: descripcionIngreso,  // Solo enviamos el monto y la descripción

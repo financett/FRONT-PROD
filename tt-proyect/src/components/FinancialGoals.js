@@ -16,14 +16,14 @@ const VisualizarMetas = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://127.0.0.1:5000/api/metas', {
+      const response = await axios.get('https://back-flask-6q6j.onrender.com/api/metas', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const metasConTransacciones = await Promise.all(
         response.data.map(async (meta) => {
           const transaccionesResponse = await axios.get(
-            `http://127.0.0.1:5000/api/metas/${meta.ID_Meta}/transacciones`,
+            `https://back-flask-6q6j.onrender.com/api/metas/${meta.ID_Meta}/transacciones`,
             {
               headers: { Authorization: `Bearer ${token}` }
             }
@@ -79,7 +79,7 @@ const VisualizarMetas = () => {
     if (window.confirm("¿Estás seguro de que deseas eliminar esta meta?")) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://127.0.0.1:5000/api/metas/${id_meta}`, {
+        await axios.delete(`https://back-flask-6q6j.onrender.com/api/metas/${id_meta}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         fetchMetas(); // Actualizar la lista de metas después de eliminar

@@ -52,7 +52,7 @@ const GroupFinanceDashboard = () => {
         return;
       }
 
-      const response = await axios.get(`http://127.0.0.1:5000/api/grupo/${grupoId}/info`, {
+      const response = await axios.get(`https://back-flask-6q6j.onrender.com/api/grupo/${grupoId}/info`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setGroupName(response.data.Nombre_Grupo || 'Grupo');
@@ -71,7 +71,7 @@ const GroupFinanceDashboard = () => {
         return;
       }
 
-      const response = await axios.get(`http://127.0.0.1:5000/api/grupo/${grupoId}/gastos`, {
+      const response = await axios.get(`https://back-flask-6q6j.onrender.com/api/grupo/${grupoId}/gastos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -103,7 +103,7 @@ const GroupFinanceDashboard = () => {
         }
 
         const response = await axios.post(
-            `http://127.0.0.1:5000/api/grupo/${grupoId}/gastos/filtrados`,
+            `https://back-flask-6q6j.onrender.com/api/grupo/${grupoId}/gastos/filtrados`,
             {
                 ...filters, // Enviar filtros al backend
             },
@@ -150,7 +150,7 @@ const GroupFinanceDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://127.0.0.1:5000/api/grupo/${grupoId}/gastos/${expenseToDelete}`, {
+      await axios.delete(`https://back-flask-6q6j.onrender.com/api/grupo/${grupoId}/gastos/${expenseToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setGroupExpenses(groupExpenses.filter((expense) => expense.ID_Gasto !== expenseToDelete));

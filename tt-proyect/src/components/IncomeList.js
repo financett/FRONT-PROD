@@ -15,7 +15,7 @@ const IncomeList = () => {
         const fetchIngresos = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get('http://127.0.0.1:5000/api/user/incomes', {
+                const response = await axios.get('https://back-flask-6q6j.onrender.com/api/user/incomes', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setIngresos(response.data);
@@ -37,7 +37,7 @@ const IncomeList = () => {
 
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://127.0.0.1:5000/api/user/incomes/${incomeToDelete}`, {
+            await axios.delete(`https://back-flask-6q6j.onrender.com/api/user/incomes/${incomeToDelete}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setIngresos(ingresos.filter((ingreso) => ingreso.ID_Ingreso !== incomeToDelete));

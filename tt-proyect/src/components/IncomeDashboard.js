@@ -62,7 +62,7 @@ const IncomeDashboard = () => {
         return;
       }
 
-      const response = await axios.get('http://127.0.0.1:5000/api/user/incomes', {
+      const response = await axios.get('https://back-flask-6q6j.onrender.com/api/user/incomes', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const ingresosData = response.data;
@@ -72,7 +72,7 @@ const IncomeDashboard = () => {
       setEvents(events);
 
       const chartResponse = await axios.post(
-        'http://127.0.0.1:5000/api/income/filtered',
+        'https://back-flask-6q6j.onrender.com/api/income/filtered',
         {
           user_id: userID,
           ...filters,
@@ -116,7 +116,7 @@ const IncomeDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://127.0.0.1:5000/api/user/incomes/${incomeToDelete}`, {
+      await axios.delete(`https://back-flask-6q6j.onrender.com/api/user/incomes/${incomeToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setIngresos(ingresos.filter((ingreso) => ingreso.ID_Ingreso !== incomeToDelete));

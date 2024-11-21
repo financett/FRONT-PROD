@@ -24,7 +24,7 @@ const AddGroupExpense = () => {
     const fetchUserGroups = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://127.0.0.1:5000/api/grupos`, {
+        const response = await axios.get(`https://back-flask-6q6j.onrender.com/api/grupos`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -37,7 +37,7 @@ const AddGroupExpense = () => {
           navigate('/'); // Redirigir si no pertenece al grupo
         }
 
-        const miembrosResponse = await axios.get(`http://127.0.0.1:5000/api/grupo/${grupoId}`, {
+        const miembrosResponse = await axios.get(`https://back-flask-6q6j.onrender.com/api/grupo/${grupoId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -85,7 +85,7 @@ const AddGroupExpense = () => {
         es_mi_gasto: isAdmin ? expenseData.es_mi_gasto : true, // Siempre true para miembros
       };
 
-      await axios.post(`http://127.0.0.1:5000/api/grupo/${grupoId}/registrar-gasto`, payload, {
+      await axios.post(`https://back-flask-6q6j.onrender.com/api/grupo/${grupoId}/registrar-gasto`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

@@ -32,7 +32,7 @@ const FinancialOverview = () => {
         return;
       }
 
-      const endpoint = 'http://127.0.0.1:5000/api/totales_financieros';
+      const endpoint = 'https://back-flask-6q6j.onrender.com/api/totales_financieros';
 
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
@@ -86,10 +86,10 @@ const FinancialOverview = () => {
       });
 
       // Eventos de calendario
-      const ingresosResponse = await axios.get('http://127.0.0.1:5000/api/user/incomes', {
+      const ingresosResponse = await axios.get('https://back-flask-6q6j.onrender.com/api/user/incomes', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const gastosResponse = await axios.get('http://127.0.0.1:5000/api/user/gastos', {
+      const gastosResponse = await axios.get('https://back-flask-6q6j.onrender.com/api/user/gastos', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
