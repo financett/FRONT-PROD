@@ -59,7 +59,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://127.0.0.1:5000/api/subcategorias/${category}`,
+        `https://back-flask-production.up.railway.app/api/subcategorias/${category}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -110,7 +110,7 @@ const AddExpenseModal = ({ onClose, onSave }) => {
         periodico: expenseData.Periodico,
       };
 
-      await axios.post('http://127.0.0.1:5000/api/gasto', payload, {
+      await axios.post('https://back-flask-production.up.railway.app/api/gasto', payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
