@@ -15,7 +15,7 @@ const IncomeList = () => {
         const fetchIngresos = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get('https://back-flask-6q6j.onrender.com/api/user/incomes', {
+                const response = await axios.get('https://back-flask-production.up.railway.app/api/user/incomes', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setIngresos(response.data);
@@ -37,7 +37,7 @@ const IncomeList = () => {
 
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`https://back-flask-6q6j.onrender.com/api/user/incomes/${incomeToDelete}`, {
+            await axios.delete(`https://back-flask-production.up.railway.app/api/user/incomes/${incomeToDelete}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setIngresos(ingresos.filter((ingreso) => ingreso.ID_Ingreso !== incomeToDelete));

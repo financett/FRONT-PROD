@@ -17,7 +17,7 @@ const Grupos = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('https://back-flask-6q6j.onrender.com/api/grupos', {
+      const response = await axios.get('https://back-flask-production.up.railway.app/api/grupos', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setGrupos(response.data);

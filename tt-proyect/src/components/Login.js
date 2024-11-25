@@ -18,7 +18,7 @@ const Login = () => {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://back-flask-6q6j.onrender.com/api/login', 
+      const response = await axios.post('https://back-flask-production.up.railway.app/api/login', 
       {
         email, 
         password

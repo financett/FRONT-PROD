@@ -30,7 +30,7 @@ const DetalleMeta = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `https://back-flask-6q6j.onrender.com/api/metas/${idMeta}`,
+        `https://back-flask-production.up.railway.app/api/metas/${idMeta}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -59,7 +59,7 @@ const DetalleMeta = () => {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `https://back-flask-6q6j.onrender.com/api/metas/${idMeta}/transacciones`,
+        `https://back-flask-production.up.railway.app/api/metas/${idMeta}/transacciones`,
         transaccion,
         {
           headers: {

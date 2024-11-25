@@ -39,7 +39,7 @@ const Register = () => {
         }
 
         try {
-            const response = await axios.post('https://back-flask-6q6j.onrender.com/api/register', {
+            const response = await axios.post('https://back-flask-production.up.railway.app/api/register', {
                 email,
                 password,
                 nombre,

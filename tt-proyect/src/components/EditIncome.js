@@ -24,7 +24,7 @@ const EditIncome = () => {
         const fetchIncomeData = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get(`https://back-flask-6q6j.onrender.com/api/user/income/${id}`, {
+                const response = await axios.get(`https://back-flask-production.up.railway.app/api/user/income/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
@@ -71,7 +71,7 @@ const EditIncome = () => {
     const handleConfirmUpdate = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`https://back-flask-6q6j.onrender.com/api/user/update_income/${id}`, {
+            await axios.put(`https://back-flask-production.up.railway.app/api/user/update_income/${id}`, {
                 ...incomeData,
                 Monto: incomeData.Monto.replace(/[^0-9.-]+/g, '') // Elimina el formato antes de enviar
             }, {

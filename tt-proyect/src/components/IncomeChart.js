@@ -34,7 +34,7 @@ const IncomeChart = () => {
         return;
       }
 
-      const response = await axios.post('https://back-flask-6q6j.onrender.com/api/income/filtered', 
+      const response = await axios.post('https://back-flask-production.up.railway.app/api/income/filtered', 
       {
         user_id: userID,
         ...filters, // Aplicar filtros si se proporcionan

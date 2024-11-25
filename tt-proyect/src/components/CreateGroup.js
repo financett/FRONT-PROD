@@ -35,7 +35,7 @@ const CreateGroup = () => {
       }
 
       const response = await axios.post(
-        'https://back-flask-6q6j.onrender.com/api/crear_grupo',
+        'https://back-flask-production.up.railway.app/api/crear_grupo',
         {
           nombre_grupo: groupName,
           descripcion: description,

@@ -105,7 +105,7 @@ const FloatingTab = ({ onSave }) => {
     if (validIncomes.length > 0) {
       try {
         for (const income of validIncomes) {
-          await axios.post('https://back-flask-6q6j.onrender.com/api/ingreso', {
+          await axios.post('https://back-flask-production.up.railway.app/api/ingreso', {
             id_usuario: userID,
             monto: income.amount,
             periodicidad: income.frequency,

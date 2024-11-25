@@ -61,7 +61,7 @@ const ExpenseDashboard = () => {
         return;
       }
 
-      const response = await axios.get('https://back-flask-6q6j.onrender.com/api/user/gastos', {
+      const response = await axios.get('https://back-flask-production.up.railway.app/api/user/gastos', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const expensesData = response.data;
@@ -71,7 +71,7 @@ const ExpenseDashboard = () => {
       setEvents(events);
 
       const chartResponse = await axios.post(
-        'https://back-flask-6q6j.onrender.com/api/gasto/filtered',
+        'https://back-flask-production.up.railway.app/api/gasto/filtered',
         {
           user_id: userID,
           ...filters,
@@ -115,7 +115,7 @@ const ExpenseDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`https://back-flask-6q6j.onrender.com/api/gasto/${expenseToDelete}`, {
+      await axios.delete(`https://back-flask-production.up.railway.app/api/gasto/${expenseToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setExpenses(expenses.filter((expense) => expense.ID_Gasto !== expenseToDelete));

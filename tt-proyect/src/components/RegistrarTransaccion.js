@@ -13,7 +13,7 @@ const RegistrarTransaccion = ({ idMeta, fetchMetas }) => {
         montoAhorrado,
         fechaTransaccion
       };
-      await axios.post(`https://back-flask-6q6j.onrender.com/api/metas/${idMeta}/transacciones`, data, {
+      await axios.post(`https://back-flask-production.up.railway.app/api/metas/${idMeta}/transacciones`, data, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       setMontoAhorrado('');

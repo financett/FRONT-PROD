@@ -11,7 +11,7 @@ const EmailVerification = () => {
     useEffect(() => {
         const verifyEmail = async () => {
             try {
-                const response = await axios.get(`https://back-flask-6q6j.onrender.com/confirm_email/${token}`);
+                const response = await axios.get(`https://back-flask-production.up.railway.app/confirm_email/${token}`);
                 if (response.status === 200) {
                     setMessage('Correo verificado con éxito.');
                 } else {

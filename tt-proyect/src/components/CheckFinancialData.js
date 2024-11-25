@@ -9,7 +9,7 @@ const CheckFinancialData = () => {
     const validateData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('https://back-flask-6q6j.onrender.com/api/validar-ingresos-gastos', {
+        const response = await axios.get('https://back-flask-production.up.railway.app/api/validar-ingresos-gastos', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
