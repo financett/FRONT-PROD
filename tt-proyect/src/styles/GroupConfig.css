@@ -50,3 +50,43 @@
 .btn-sm {
   font-size: 0.9em;
 }
+.group-config-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.group-config-actions button {
+  width: 150px;
+  font-size: 14px;
+  padding: 10px;
+}
+.group-config-buttons .btn {
+  font-size: 12px; /* Tamaño más pequeño */
+  padding: 5px 10px; /* Menos espacio interno */
+  width: auto; /* Ajuste automático al contenido */
+  min-width: 100px; /* Tamaño mínimo */
+}
+.overlay {
+  position: fixed; /* Fija la superposición a toda la pantalla */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro con opacidad */
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Centra el contenido */
+  z-index: 9999; /* Asegura que esté encima de otros elementos */
+}
+
+.loading-message {
+  color: white;
+  font-size: 20px;
+  text-align: center;
+}
+
+.loading-image {
+  margin-top: 10px;
+  width: 50px; /* Ajusta el tamaño del GIF */
+}

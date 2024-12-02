@@ -13,6 +13,7 @@ import FilterModal from './FilterModalGastosGrupales';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import logo1 from '../assets/images/logo1.png';
+import coinGif from '../assets/images/coin.gif';
 
 Chart.register(ArcElement, Tooltip, Legend);
 
@@ -29,6 +30,7 @@ const GroupFinanceDashboard = () => {
   const [metas, setMetas] = useState([]); // Estado para almacenar las metas grupales
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null);
+  const [showLeaveModal, setShowLeaveModal] = useState(false); // Estado para mostrar u ocultar el modal de confirmación
   const [isAdmin, setIsAdmin] = useState(false); // Nuevo estado para identificar si el usuario es admin
   const [currentUserId, setCurrentUserId] = useState(null); // Nuevo estado para almacenar el ID del usuario actual
   const [selectedDate, setSelectedDate] = useState(null);
@@ -40,6 +42,8 @@ const GroupFinanceDashboard = () => {
   const [filteredGroupExpenses, setFilteredGroupExpenses] = useState([]); // Gastos filtrados por búsqueda
   const navigate = useNavigate();
   const { grupoId } = useParams(); // Obtener el ID del grupo desde la URL
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
 
   const transformExpensesToEvents = (expenses) => {
     return expenses.map((expense) => {
@@ -78,8 +82,21 @@ const GroupFinanceDashboard = () => {
   }, [grupoId, navigate]);
   
   useEffect(() => {
-    const events = transformExpensesToEvents(groupExpenses);
-    setEvents(events);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Aquí va tu código para obtener datos (por ejemplo, usando fetch o axios)
+        const response = await fetch("/api/datos");
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error("Error al cargar los datos:", error);
+      } finally {
+        setLoading(false); // Al terminar de cargar, cambiamos loading a false
+      }
+    };
+  
+    fetchData();
   }, [groupExpenses]);
 
   const fetchGroupExpenses = useCallback(async (filters = {}) => {
@@ -355,7 +372,7 @@ const GroupFinanceDashboard = () => {
       }
     } catch (error) {
       console.error('Error al eliminar el gasto del grupo:', error);
-      alert('No se pudo eliminar el gasto. Por favor, intenta nuevamente.');
+      //alert('No se pudo eliminar el gasto. Por favor, intenta nuevamente.');
     }
   };
   
@@ -364,6 +381,31 @@ const GroupFinanceDashboard = () => {
     setShowModal(false);
     setExpenseToDelete(null);
   };
+
+  const handleLeaveGroup = () => {
+    setShowLeaveModal(true); // Mostrar el modal
+  };
+  
+  const confirmLeaveGroup = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`https://back-flask-production.up.railway.app/api/grupo/${grupoId}/salir`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      //alert('Has salido del grupo exitosamente.');
+      navigate('/dashboard/listado_grupos'); // Redirigir al listado de grupos
+    } catch (error) {
+      console.error('Error al salir del grupo:', error);
+      //alert('Hubo un error al intentar salir del grupo. Por favor, intenta nuevamente.');
+    } finally {
+      setShowLeaveModal(false); // Cerrar el modal
+    }
+  };
+  
+  const cancelLeaveGroup = () => {
+    setShowLeaveModal(false); // Cerrar el modal
+  };
+  
 
   const handleEdit = (idGasto) => {
     navigate(`/dashboard/grupo/${grupoId}/edit-expense/${idGasto}`);
@@ -425,197 +467,223 @@ const GroupFinanceDashboard = () => {
   const handleViewGoals = () => {
     navigate(`/dashboard/grupo/${grupoId}/metas-grupales`); // Ruta para ver metas
   };
-
   return (
     <div className="expense-dashboard-container">
-      <h2 className="expense-dashboard-title">{groupName}</h2>
-      <p className="group-description">{groupDescription}</p>
-
-      <div className="expense-chart-section">
-        <div className="chart-and-buttons">
-          <div className="expense-chart">
-            {chartData && chartData.labels && chartData.labels.length > 0 ? (
-              <Pie data={chartData} width={300} height={300} />
-            ) : (
-              <p>No hay datos disponibles para mostrar.</p>
-            )}
-          </div>
-
-          <div className="button-group">
-            <button
-              className="btn btn-outline-secondary filter-button"
-              onClick={() => setShowFilterModal(true)}
-            >
-              <i className="bi bi-filter"></i> Filtrar
-            </button>
-
-            <button
-              className="btn btn-primary add-expense-button"
-              onClick={() => navigate(`/dashboard/grupo/${grupoId}/add-expense`)}
-            >
-              <i className="bi bi-plus"></i> Agregar Gasto
-            </button>
-            <button
-              className="btn btn-primary add-income-button"
-              onClick={handleGeneratePDF}
-            >
-              <i className="bi bi-file-earmark-pdf"></i> Generar Reporte PDF
-            </button>
-          </div>
-
-          <div className="expense-calendar">
-            <Calendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: 500, width: 700 }}
-              components={{
-                toolbar: CustomToolbar,
-              }}
-              onSelectEvent={(event, e) => handleEventClick(event, e)}
-              onSelectSlot={(slotInfo) => handleDateClick(slotInfo)}
-              selectable
-            />
+      {/* Mostrar la animación de carga */}
+      {loading ? (
+        <div className="overlay">
+          <div className="loading-message">
+            Cargando info... <br />
+            <img src={coinGif} alt="Cargando..." className="loading-image" />
           </div>
         </div>
-      </div>
-
-
-       
-      <div className="search-bar" style={{ marginBottom: '20px' }}>
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Buscar por descripción..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-        />
-      </div>
-      <div className="expense-list-section">
-        <table className="expense-table">
-          <thead>
-            <tr>
-              <th>Descripción</th>
-              <th>Monto</th>
-              <th>Responsable</th>
-              <th>Estado</th>
-              <th>Fecha</th>
-              <th>Eliminar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredGroupExpenses.map((expense) => (
-              <tr key={expense.ID_Gasto}>
-                <td>{expense.Descripcion}</td>
-                <td>{expense.Monto}</td>
-                <td>
-                  {expense.Responsable === 'Pendiente' ? (
-                    <button
-                      className="btn btn-link text-decoration-none"
-                      onClick={() => handleOpenClaimModal(expense.ID_Gasto)}
-                    >
-                      Registra este gasto como tuyo
-                    </button>
-                  ) : (
-                    expense.Responsable
-                  )}
-                </td>
-                <td>{expense.Estado}</td>
-                <td>{new Date(expense.Fecha).toISOString().split('T')[0]}</td>
-                <td>
-                  {(isAdmin || expense.ID_Usuario === currentUserId) && (
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDelete(expense.ID_Gasto)}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-
-          {showClaimModal && (
-            <ConfirmationModal
-              message="¿Estás seguro de que deseas registrar este gasto como tuyo?"
-              onConfirm={handleConfirmClaimExpense}
-              onCancel={() => {
-                setShowClaimModal(false);
-                setClaimingExpense(null);
-              }}
-            />
-          )}
-
-
-        </table>
-      </div>
-
-      {showModal && (
-        <ConfirmationModal
-          message="¿Estás seguro de que deseas eliminar este gasto?"
-          onConfirm={confirmDelete}
-          onCancel={cancelDelete}
-        />
-      )}
-
-      {showFilterModal && (
-        <FilterModal
-          initialFilters={currentFilters}
-          onApplyFilters={handleApplyFilters}
-          onClearFilters={handleClearFilters}
-          onClose={() => setShowFilterModal(false)}
-        />
-      )}
-      <br></br><br></br>
-      <div className="metas-progress-container" style={{ marginTop: '20px' }}>
-        <h3>Progreso de Metas</h3>
-        {metas.length > 0 ? (
-          metas.map((meta) => (
-            <div
-              key={meta.ID_Ahorro_Grupal}
-              className="meta-item"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                marginBottom: '20px',
-                gap: '20px',
-              }}
-            >
-              {/* Nombre de la meta */}
-              <span style={{ flex: '1', marginRight: '10px', fontWeight: 'bold' }}>
-                {meta.Descripcion}
-              </span>
-
-              {/* Barra de progreso */}
-              <div className="progress-bar-container" style={{ flex: '3' }}>
-                <div
-                  className="progress"
-                  style={{ width: `${meta.progreso}%` }}
-                ></div>
-                <div className="progress-text">{meta.progreso}%</div>
+      ) : (
+        <>
+          {/* Aquí va tu contenido principal, que se muestra cuando loading es false */}
+          <h2 className="expense-dashboard-title">{groupName}</h2>
+          <p className="group-description">{groupDescription}</p>
+          <div className="expense-chart-section">
+            <div className="chart-and-buttons">
+              <div className="expense-chart">
+                {chartData && chartData.labels && chartData.labels.length > 0 ? (
+                  <Pie data={chartData} width={300} height={300} />
+                ) : (
+                  <p>No hay datos disponibles para mostrar.</p>
+                )}
+              </div>
+  
+              <div className="button-group">
+                <button
+                  className="btn btn-outline-secondary filter-button"
+                  onClick={() => setShowFilterModal(true)}
+                >
+                  <i className="bi bi-filter"></i> Filtrar
+                </button>
+  
+                <button
+                  className="btn btn-primary add-expense-button"
+                  onClick={() => navigate(`/dashboard/grupo/${grupoId}/add-expense`)}
+                >
+                  <i className="bi bi-plus"></i> Agregar Gasto
+                </button>
+                <button
+                  className="btn btn-primary add-income-button"
+                  onClick={handleGeneratePDF}
+                >
+                  <i className="bi bi-file-earmark-pdf"></i> Generar Reporte PDF
+                </button>
+              </div>
+  
+              <div className="expense-calendar">
+                <Calendar
+                  localizer={localizer}
+                  events={events}
+                  startAccessor="start"
+                  endAccessor="end"
+                  style={{ height: 500, width: 700 }}
+                  components={{
+                    toolbar: CustomToolbar,
+                  }}
+                  onSelectEvent={(event, e) => handleEventClick(event, e)}
+                  onSelectSlot={(slotInfo) => handleDateClick(slotInfo)}
+                  selectable
+                />
               </div>
             </div>
-          ))
-        ) : (
-          <p>No hay metas registradas.</p>
-        )}
+          </div>
+  
+          <div className="search-bar" style={{ marginBottom: '20px' }}>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar por descripción..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+          </div>
+  
+          <div className="expense-list-section">
+            <table className="expense-table">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th>Monto</th>
+                  <th>Responsable</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                  <th>Eliminar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredGroupExpenses.map((expense) => (
+                  <tr key={expense.ID_Gasto}>
+                    <td>{expense.Descripcion}</td>
+                    <td>{expense.Monto}</td>
+                    <td>
+                      {expense.Responsable === 'Pendiente' ? (
+                        <button
+                          className="btn btn-link text-decoration-none"
+                          onClick={() => handleOpenClaimModal(expense.ID_Gasto)}
+                        >
+                          Registra este gasto como tuyo
+                        </button>
+                      ) : (
+                        expense.Responsable
+                      )}
+                    </td>
+                    <td>{expense.Estado}</td>
+                    <td>{new Date(expense.Fecha).toISOString().split('T')[0]}</td>
+                    <td>
+                      {(isAdmin || expense.ID_Usuario === currentUserId) && (
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleDelete(expense.ID_Gasto)}
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+  
+              {showClaimModal && (
+                <ConfirmationModal
+                  message="¿Estás seguro de que deseas registrar este gasto como tuyo?"
+                  onConfirm={handleConfirmClaimExpense}
+                  onCancel={() => {
+                    setShowClaimModal(false);
+                    setClaimingExpense(null);
+                  }}
+                />
+              )}
+            </table>
+          </div>
+  
+          {showModal && (
+            <ConfirmationModal
+              message="¿Estás seguro de que deseas eliminar este gasto?"
+              onConfirm={confirmDelete}
+              onCancel={cancelDelete}
+            />
+          )}
+  
+          {showFilterModal && (
+            <FilterModal
+              initialFilters={currentFilters}
+              onApplyFilters={handleApplyFilters}
+              onClearFilters={handleClearFilters}
+              onClose={() => setShowFilterModal(false)}
+            />
+          )}
+          <br></br><br></br>
+  
+          <div className="metas-progress-container" style={{ marginTop: '20px' }}>
+            <h3>Progreso de Metas</h3>
+            {metas.length > 0 ? (
+              metas.map((meta) => (
+                <div
+                  key={meta.ID_Ahorro_Grupal}
+                  className="meta-item"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginBottom: '20px',
+                    gap: '20px',
+                  }}
+                >
+                  <span style={{ flex: '1', marginRight: '10px', fontWeight: 'bold' }}>
+                    {meta.Descripcion}
+                  </span>
+  
+                  <div className="progress-bar-container" style={{ flex: '3' }}>
+                    <div
+                      className="progress"
+                      style={{ width: `${meta.progreso}%` }}
+                    ></div>
+                    <div className="progress-text">{meta.progreso}%</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>No hay metas registradas.</p>
+            )}
+  
+            <div className="view-goals-button-container" style={{ textAlign: 'center', marginTop: '20px' }}>
+              <button
+                className="btn btn-success"
+                onClick={handleViewGoals}
+                style={{ backgroundColor: '#4caf50', border: 'none', padding: '10px 20px', borderRadius: '5px' }}
+              >
+                Ver Metas
+              </button>
+            </div>
+          </div>
+          <div className="group-exit-action">
+            {!isAdmin && (
+              <button
+                className="btn btn-danger"
+                onClick={handleLeaveGroup}
+                style={{ marginTop: '20px', padding: '10px 20px' }}
+              >
+                Salir del Grupo
+              </button>
+            )}
 
-        {/* Botón para ver todas las metas */}
-        <div className="view-goals-button-container" style={{ textAlign: 'center', marginTop: '20px' }}>
-          <button
-            className="btn btn-success"
-            onClick={handleViewGoals}
-            style={{ backgroundColor: '#4caf50', border: 'none', padding: '10px 20px', borderRadius: '5px' }}
-          >
-            Ver Metas
-          </button>
-        </div>
-      </div>
-
+            {showLeaveModal && (
+              <ConfirmationModal
+                message="¿Estás seguro de que deseas salir del grupo? Esta acción no se puede deshacer."
+                onConfirm={confirmLeaveGroup} // Confirmar salida
+                onCancel={cancelLeaveGroup} // Cancelar acción
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
+  
+  
 };
 
 export default GroupFinanceDashboard;
