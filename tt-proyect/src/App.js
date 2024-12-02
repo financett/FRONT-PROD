@@ -29,6 +29,11 @@ import GroupConfig from './components/GroupConfig'; // Importa el componente de 
 import VisualizarMetasGrupales from './components/VisualizarMetasGrupales'; // Importa el componente de configuración del grupo
 import AddGroupMembers from './components/AddGroupMembers'; // Importa el componente de configuración del grupo
 import EditExpenseModal from './components/EditExpenseModal'; // Importa el componente de configuración del grupo
+import DetalleMetaGrupal from './components/DetalleMetaGrupal';
+import AccountSettings from './components/AccountSettings';
+import EditAccount from './components/EditAccount';
+import ChangeEmail from './components/ChangeEmail';
+import ChangePassword from './components/ChangePassword';
 
 
 function App() {
@@ -57,6 +62,10 @@ function App() {
             <Route path="/dashboard/edit-expense/:idGasto" element={<EditExpenseModal />} />
             <Route path="grupo/crear" element={<CreateGroup />} /> {/* Nueva ruta */}
             <Route path="listado_grupos" element={<Grupos />} /> {/* Ruta de Grupos */}
+            <Route path="/dashboard/configuracionCuennta" element={<AccountSettings />} />
+            <Route path="/dashboard/configuracion/editar" element={<EditAccount />} />
+            <Route path="/dashboard/configuracion/cambiar-correo" element={<ChangeEmail />} />
+            <Route path="/dashboard/configuracion/cambiar-contrasena" element={<ChangePassword />} />
             <Route path="/dashboard/validar-datos-financieros" element={<CheckFinancialData />} /> 
             <Route path="/dashboard/metas-financieras" element={<FinancialGoals />} />
             <Route path="/dashboard/registrar-meta" element={<RegisterGoal />} />
@@ -67,6 +76,7 @@ function App() {
             <Route path="/dashboard/grupo/:grupoId/metas-grupales" element={<VisualizarMetasGrupales />} />
             <Route path="/dashboard/grupo/:grupoId/agregar-miembro" element={<AddGroupMembers />} />
             <Route path="/dashboard/grupo/configurar/:grupoId" element={<GroupConfig />} /> {/* Ruta de configuración del grupo */}
+            <Route path="/dashboard/grupo/:grupoId/metas/:metaId" element={<DetalleMetaGrupal />}/>
 
             </Route>
         </Routes>

@@ -4,12 +4,15 @@ import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConfirmationModal from './ConfirmationModal';
-import FilterModal from './FilterModal';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import '../styles/ExpenseDashboard.css'; // Reutilizamos los estilos
 import CustomToolbar from './CustomToolbar';
+import FilterModal from './FilterModalGastosGrupales';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import logo1 from '../assets/images/logo1.png';
 
 Chart.register(ArcElement, Tooltip, Legend);
 
@@ -23,11 +26,18 @@ const GroupFinanceDashboard = () => {
   const [chartData, setChartData] = useState({});
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [currentFilters, setCurrentFilters] = useState({});
+  const [metas, setMetas] = useState([]); // Estado para almacenar las metas grupales
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false); // Nuevo estado para identificar si el usuario es admin
+  const [currentUserId, setCurrentUserId] = useState(null); // Nuevo estado para almacenar el ID del usuario actual
   const [selectedDate, setSelectedDate] = useState(null);
   const [groupName, setGroupName] = useState('');
   const [groupDescription, setGroupDescription] = useState('');
+  const [searchTerm, setSearchTerm] = useState(''); // Término de búsqueda
+  const [claimingExpense, setClaimingExpense] = useState(null); // Gasto en proceso de reclamación
+  const [showClaimModal, setShowClaimModal] = useState(false); // Mostrar el modal de reclamación
+  const [filteredGroupExpenses, setFilteredGroupExpenses] = useState([]); // Gastos filtrados por búsqueda
   const navigate = useNavigate();
   const { grupoId } = useParams(); // Obtener el ID del grupo desde la URL
 
@@ -43,6 +53,7 @@ const GroupFinanceDashboard = () => {
       };
     });
   };
+  
 
   const fetchGroupInfo = useCallback(async () => {
     try {
@@ -51,17 +62,25 @@ const GroupFinanceDashboard = () => {
         navigate('/');
         return;
       }
-
+  
       const response = await axios.get(`https://back-flask-production.up.railway.app/api/grupo/${grupoId}/info`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+  
       setGroupName(response.data.Nombre_Grupo || 'Grupo');
       setGroupDescription(response.data.Descripcion || 'Sin descripción');
+      setIsAdmin(response.data.EsAdmin); // Suponiendo que el backend devuelve "EsAdmin"
+      setCurrentUserId(response.data.UserId); // Suponiendo que el backend devuelve "UserId"
     } catch (error) {
       console.error('Error al obtener la información del grupo:', error);
       navigate('/'); // Redirigir si hay un error crítico
     }
   }, [grupoId, navigate]);
+  
+  useEffect(() => {
+    const events = transformExpensesToEvents(groupExpenses);
+    setEvents(events);
+  }, [groupExpenses]);
 
   const fetchGroupExpenses = useCallback(async (filters = {}) => {
     try {
@@ -70,74 +89,73 @@ const GroupFinanceDashboard = () => {
         navigate('/');
         return;
       }
-
-      const response = await axios.get(`https://back-flask-production.up.railway.app/api/grupo/${grupoId}/gastos`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      // Mapear los datos a los nombres de campos esperados
-      const expenses = response.data.map(expense => ({
-        ID_Gasto: expense.ID_Gasto_Grupal, // Renombrar campo
-        Descripcion: expense.Descripcion,
-        Monto: expense.Monto,
-        Fecha: expense.Fecha,
-        Responsable: expense.Responsable, // Ahora obtenemos el campo directamente
-        Estado: expense.Estado,
+  
+      const response = await axios.post(
+        `https://back-flask-production.up.railway.app/api/grupo/${grupoId}/gastos/filtrados`,
+        filters,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      setIsAdmin(response.data.EsAdmin); // Guardar si es administrador
+      setCurrentUserId(response.data.UserId); // Guardar el ID del usuario autenticado
+      const gastos = response.data.Gastos.map((gasto) => ({
+        ...gasto,
+        ID_Usuario: gasto.ID_Usuario || null, // Asegurar que exista ID_Usuario
       }));
-
-      setGroupExpenses(expenses);
-
-      const events = transformExpensesToEvents(expenses);
-      setEvents(events);
+  
+      setGroupExpenses(gastos);
+      setFilteredGroupExpenses(gastos); // Inicializar correctamente
     } catch (error) {
       console.error('Error al obtener los datos del grupo:', error);
     }
-  }, [navigate, grupoId]);
+  }, [grupoId, navigate]);
+  
+  
+  
 
   const fetchChartData = useCallback(async (filters = {}) => {
     try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/');
-            return;
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/');
+        return;
+      }
+  
+      const response = await axios.post(
+        `https://back-flask-production.up.railway.app/api/grupo/${grupoId}/gastos/filtrados`,
+        filters,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         }
-
-        const response = await axios.post(
-            `https://back-flask-production.up.railway.app/api/grupo/${grupoId}/gastos/filtrados`,
-            {
-                ...filters, // Enviar filtros al backend
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            }
-        );
-
-        const expenseData = response.data;
-
-        const data = {
-            labels: expenseData.map((item) => item.Descripcion),
-            datasets: [
-                {
-                    label: 'Gastos del grupo',
-                    data: expenseData.map((item) => item.Monto),
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
-                },
-            ],
-        };
-
-        setChartData(data);
+      );
+  
+      const expenseData = response.data.Gastos; // Cambiado para extraer los gastos
+  
+      const data = {
+        labels: expenseData.map((item) => item.Descripcion),
+        datasets: [
+          {
+            label: 'Gastos del grupo',
+            data: expenseData.map((item) => item.Monto),
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+          },
+        ],
+      };
+  
+      setChartData(data);
     } catch (error) {
-        console.error('Error al obtener los datos para la gráfica:', error);
+      console.error('Error al obtener los datos para la gráfica:', error);
     }
-}, [grupoId, navigate]);
+  }, [grupoId, navigate]);
+  
 
   useEffect(() => {
     fetchGroupInfo();
-    fetchGroupExpenses();
-    fetchChartData();
+    fetchGroupExpenses(); // Llama al endpoint sin filtros
+    fetchChartData(); // Llama al endpoint sin filtros
   }, [fetchGroupInfo, fetchGroupExpenses, fetchChartData]);
 
   const handleDelete = (id) => {
@@ -145,21 +163,202 @@ const GroupFinanceDashboard = () => {
     setShowModal(true);
   };
 
-  const confirmDelete = async () => {
-    if (!expenseToDelete) return;
+  const handleOpenClaimModal = (expenseId) => {
+    setClaimingExpense(expenseId);
+    setShowClaimModal(true);
+  };
 
+  const handleSearchChange = (event) => {
+    const searchValue = event.target.value.toLowerCase();
+    setSearchTerm(searchValue);
+  
+    // Filtrar los gastos por descripción
+    const filtered = groupExpenses.filter((expense) =>
+      expense.Descripcion.toLowerCase().includes(searchValue)
+    );
+  
+    // Actualizar los datos filtrados
+    setFilteredGroupExpenses(filtered);
+  
+    // Actualizar eventos del calendario
+    const events = transformExpensesToEvents(filtered);
+    setEvents(events);
+  
+    // Actualizar los datos de la gráfica
+    const groupedData = filtered.reduce((acc, curr) => {
+      const { Descripcion, Monto } = curr;
+      if (!acc[Descripcion]) {
+        acc[Descripcion] = 0;
+      }
+      acc[Descripcion] += Monto;
+      return acc;
+    }, {});
+  
+    const chartLabels = Object.keys(groupedData);
+    const chartValues = Object.values(groupedData);
+  
+    const data = {
+      labels: chartLabels,
+      datasets: [
+        {
+          label: 'Gastos del grupo',
+          data: chartValues,
+          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+        },
+      ],
+    };
+  
+    setChartData(data);
+  };
+
+  const handleGeneratePDF = () => {
+    const doc = new jsPDF();
+  
+    // Agregar el logo en la esquina superior izquierda
+    const img = new Image();
+    img.src = logo1;
+    doc.addImage(img, 'PNG', 10, 10, 30, 15); // Coordenadas (x, y) y tamaño (ancho, alto)
+  
+    // Agregar título y fecha de generación
+    doc.setFontSize(18);
+    doc.text('Reporte de Gastos del Grupo', 50, 20);
+    doc.setFontSize(12);
+    doc.text(`Fecha de Generación: ${new Date().toLocaleDateString()}`, 14, 40);
+  
+    // Mostrar filtros aplicados
+    let yPosition = 50;
+    if (Object.keys(currentFilters).length > 0 || searchTerm) {
+      doc.setFontSize(12);
+      doc.text('Filtros Aplicados:', 14, yPosition);
+      yPosition += 10;
+  
+      if (currentFilters.categoria) {
+        doc.text(`- Categoría: ${currentFilters.categoria}`, 14, yPosition);
+        yPosition += 10;
+      }
+      if (currentFilters.fecha_inicio && currentFilters.fecha_fin) {
+        doc.text(
+          `- Rango de Fechas: ${new Date(currentFilters.fecha_inicio).toLocaleDateString()} - ${new Date(
+            currentFilters.fecha_fin
+          ).toLocaleDateString()}`,
+          14,
+          yPosition
+        );
+        yPosition += 10;
+      }
+      if (searchTerm) {
+        doc.text(`- Búsqueda: ${searchTerm}`, 14, yPosition);
+        yPosition += 10;
+      }
+    }
+  
+    // Generar la tabla con los datos filtrados
+    const tableColumn = ['Descripción', 'Monto', 'Responsable', 'Estado', 'Fecha'];
+    const tableRows = filteredGroupExpenses.map((expense) => [
+      expense.Descripcion || 'N/A',
+      `$${Number(expense.Monto).toFixed(2)}`,
+      expense.Responsable || 'N/A',
+      expense.Estado || 'N/A',
+      expense.Fecha ? new Date(expense.Fecha).toLocaleDateString() : 'N/A',
+    ]);
+  
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: yPosition + 10,
+    });
+  
+    // Agregar el total de los montos debajo de la tabla
+    const totalMonto = filteredGroupExpenses.reduce(
+      (acc, expense) => acc + (isNaN(expense.Monto) ? 0 : Number(expense.Monto)),
+      0
+    );
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.text(`Total: $${totalMonto.toFixed(2)}`, 14, finalY);
+  
+    // Descargar el archivo
+    doc.save('reporte_gastos_grupo.pdf');
+  };
+  
+  const handleConfirmClaimExpense = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`https://back-flask-production.up.railway.app/api/grupo/${grupoId}/gastos/${expenseToDelete}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setGroupExpenses(groupExpenses.filter((expense) => expense.ID_Gasto !== expenseToDelete));
-      setShowModal(false);
-      setExpenseToDelete(null);
+      const response = await axios.put(
+        `https://back-flask-production.up.railway.app/api/grupo/${grupoId}/gasto/${claimingExpense}/reclamar`,
+        {}, // No se necesitan datos en el cuerpo
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.status === 200) {
+        // Actualizar la lista de gastos después de reclamar
+        fetchGroupExpenses();
+        setShowClaimModal(false); // Cerrar el modal
+        setClaimingExpense(null); // Resetear el estado
+      }
     } catch (error) {
-      console.error('Error al eliminar el gasto del grupo:', error);
+      console.error('Error al reclamar el gasto:', error);
+      setShowClaimModal(false); // Cerrar el modal incluso si falla
+      setClaimingExpense(null);
     }
   };
+  
+  // Obtener información de metas grupales
+  const fetchMetasGrupales = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`https://back-flask-production.up.railway.app/api/grupo/${grupoId}/metas`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const metasConProgreso = response.data.map((meta) => {
+        const progreso = (meta.Monto_Actual / meta.Monto_Objetivo) * 100;
+        return {
+          ...meta,
+          progreso: progreso.toFixed(2), // Calcular el porcentaje de progreso
+        };
+      });
+
+      setMetas(metasConProgreso);
+    } catch (error) {
+      console.error('Error al obtener las metas grupales:', error);
+    }
+  }, [grupoId]);
+
+  useEffect(() => {
+    fetchMetasGrupales();
+  }, [fetchMetasGrupales]);
+
+  const handleViewMetaDetails = (metaId) => {
+    navigate(`/dashboard/grupo/${grupoId}/metas/${metaId}`);
+  };
+
+  const confirmDelete = async () => {
+    if (!expenseToDelete) return;
+  
+    try {
+      const token = localStorage.getItem('token');
+      // Llamar al endpoint de eliminación
+      const response = await axios.delete(
+        `https://back-flask-production.up.railway.app/api/grupo/${grupoId}/gastos/${expenseToDelete}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (response.status === 200) {
+        // Filtrar el gasto eliminado de la lista
+        setGroupExpenses(groupExpenses.filter((expense) => expense.ID_Gasto !== expenseToDelete));
+        setFilteredGroupExpenses(filteredGroupExpenses.filter((expense) => expense.ID_Gasto !== expenseToDelete));
+        
+        setShowModal(false); // Cerrar el modal de confirmación
+        setExpenseToDelete(null); // Resetear el gasto seleccionado
+      }
+    } catch (error) {
+      console.error('Error al eliminar el gasto del grupo:', error);
+      alert('No se pudo eliminar el gasto. Por favor, intenta nuevamente.');
+    }
+  };
+  
 
   const cancelDelete = () => {
     setShowModal(false);
@@ -199,14 +398,14 @@ const GroupFinanceDashboard = () => {
 
   const handleApplyFilters = (filters) => {
     setCurrentFilters(filters);
-    fetchGroupExpenses(filters);
-    fetchChartData(); // Actualizar gráfica al aplicar filtros
+    fetchGroupExpenses(filters); // Llama con filtros
+    fetchChartData(filters); // Actualizar gráfica al aplicar filtros
     setShowFilterModal(false);
   };
 
   const handleClearFilters = () => {
     setCurrentFilters({});
-    fetchGroupExpenses();
+    fetchGroupExpenses(); // Llama sin filtros
     fetchChartData(); // Actualizar gráfica al limpiar filtros
     setShowFilterModal(false);
   };
@@ -256,6 +455,12 @@ const GroupFinanceDashboard = () => {
             >
               <i className="bi bi-plus"></i> Agregar Gasto
             </button>
+            <button
+              className="btn btn-primary add-income-button"
+              onClick={handleGeneratePDF}
+            >
+              <i className="bi bi-file-earmark-pdf"></i> Generar Reporte PDF
+            </button>
           </div>
 
           <div className="expense-calendar">
@@ -275,16 +480,18 @@ const GroupFinanceDashboard = () => {
           </div>
         </div>
       </div>
-              {/* Botón centrado para "Ver Metas" */}
-      <div className="view-goals-button-container" style={{ textAlign: 'center', marginTop: '20px' }}>
-        <button
-          className="btn btn-success"
-          onClick={handleViewGoals}
-        >
-          Ver Metas
-        </button>
-      </div>
 
+
+       
+      <div className="search-bar" style={{ marginBottom: '20px' }}>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Buscar por descripción..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
+      </div>
       <div className="expense-list-section">
         <table className="expense-table">
           <thead>
@@ -298,24 +505,50 @@ const GroupFinanceDashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {groupExpenses.map((expense) => (
+            {filteredGroupExpenses.map((expense) => (
               <tr key={expense.ID_Gasto}>
                 <td>{expense.Descripcion}</td>
                 <td>{expense.Monto}</td>
-                <td>{expense.Responsable}</td>
+                <td>
+                  {expense.Responsable === 'Pendiente' ? (
+                    <button
+                      className="btn btn-link text-decoration-none"
+                      onClick={() => handleOpenClaimModal(expense.ID_Gasto)}
+                    >
+                      Registra este gasto como tuyo
+                    </button>
+                  ) : (
+                    expense.Responsable
+                  )}
+                </td>
                 <td>{expense.Estado}</td>
                 <td>{new Date(expense.Fecha).toISOString().split('T')[0]}</td>
                 <td>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleDelete(expense.ID_Gasto)}
-                  >
-                    <i className="bi bi-trash"></i>
-                  </button>
+                  {(isAdmin || expense.ID_Usuario === currentUserId) && (
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(expense.ID_Gasto)}
+                    >
+                      <i className="bi bi-trash"></i>
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
+
+          {showClaimModal && (
+            <ConfirmationModal
+              message="¿Estás seguro de que deseas registrar este gasto como tuyo?"
+              onConfirm={handleConfirmClaimExpense}
+              onCancel={() => {
+                setShowClaimModal(false);
+                setClaimingExpense(null);
+              }}
+            />
+          )}
+
+
         </table>
       </div>
 
@@ -335,6 +568,52 @@ const GroupFinanceDashboard = () => {
           onClose={() => setShowFilterModal(false)}
         />
       )}
+      <br></br><br></br>
+      <div className="metas-progress-container" style={{ marginTop: '20px' }}>
+        <h3>Progreso de Metas</h3>
+        {metas.length > 0 ? (
+          metas.map((meta) => (
+            <div
+              key={meta.ID_Ahorro_Grupal}
+              className="meta-item"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '20px',
+                gap: '20px',
+              }}
+            >
+              {/* Nombre de la meta */}
+              <span style={{ flex: '1', marginRight: '10px', fontWeight: 'bold' }}>
+                {meta.Descripcion}
+              </span>
+
+              {/* Barra de progreso */}
+              <div className="progress-bar-container" style={{ flex: '3' }}>
+                <div
+                  className="progress"
+                  style={{ width: `${meta.progreso}%` }}
+                ></div>
+                <div className="progress-text">{meta.progreso}%</div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p>No hay metas registradas.</p>
+        )}
+
+        {/* Botón para ver todas las metas */}
+        <div className="view-goals-button-container" style={{ textAlign: 'center', marginTop: '20px' }}>
+          <button
+            className="btn btn-success"
+            onClick={handleViewGoals}
+            style={{ backgroundColor: '#4caf50', border: 'none', padding: '10px 20px', borderRadius: '5px' }}
+          >
+            Ver Metas
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 };
