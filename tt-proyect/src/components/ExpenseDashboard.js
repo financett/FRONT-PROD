@@ -272,6 +272,7 @@ const ExpenseDashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setExpenses(expenses.filter((expense) => expense.ID_Gasto !== expenseToDelete));
+      await fetchExpenses();
       setShowModal(false);
       setExpenseToDelete(null);
     } catch (error) {

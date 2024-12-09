@@ -274,6 +274,7 @@ const IncomeDashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setIngresos(ingresos.filter((ingreso) => ingreso.ID_Ingreso !== incomeToDelete));
+      await fetchIngresos();
       setShowModal(false);
       setIncomeToDelete(null);
     } catch (error) {
