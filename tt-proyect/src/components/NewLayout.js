@@ -40,6 +40,7 @@ const NewLayout = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     console.log("Token:", token);
+    
     if (token) {
       const decodedToken = jwtDecode(token);
       const currentTime = Date.now() / 1000;
@@ -57,13 +58,13 @@ const NewLayout = () => {
     const hasIncome = localStorage.getItem('hasIncome') === 'true';
     const showIncomeTab = localStorage.getItem('showFloatingTabIncome') === 'true';
     const showFixedIncomeTab = localStorage.getItem('showFloatingTabFixedIncome') === 'true';
-    const tieneCuotasProximas = localStorage.getItem('tieneCuotasProximas') === 'true'; // Asegúrate de esta comparación
+    const showCuotaTab = localStorage.getItem('tieneCuotasProximas') === 'true'; // Verificar si tiene cuotas próximas
     const cuotas = JSON.parse(localStorage.getItem('cuotasProximas') || '[]');
   
     console.log("hasIncome:", hasIncome);
     console.log("showIncomeTab:", showIncomeTab);
     console.log("showFixedIncomeTab:", showFixedIncomeTab);
-    console.log("tieneCuotasProximas:", tieneCuotasProximas);
+    console.log("showCuotaTab:", showCuotaTab);
     console.log("cuotasProximas:", cuotas);
   
     setPerteneceAGrupo(localStorage.getItem('pertenece_a_grupo') === 'true');
@@ -84,10 +85,13 @@ const NewLayout = () => {
       setFechaUltimoIngresoFijo(localStorage.getItem('fechaUltimoIngresoFijo') || '');
       setFechaTerminoPeriodoFijo(localStorage.getItem('fechaTerminoPeriodoFijo') || '');
       setShowFloatingTabFixedIncome(true);
-    } else if (tieneCuotasProximas && cuotas.length > 0) {
-      console.log("Mostrando ventana flotante de cuotas");
+    } else if (showCuotaTab && cuotas.length > 0) {
+      // Mostrar la ventana flotante de cuotas si está habilitado en el localStorage
       setCuotasProximas(cuotas);
       setShowFloatingTabCuota(true);
+  
+      // Actualizar localStorage para que no vuelva a mostrarse
+      localStorage.setItem('tieneCuotasProximas', 'false');
     }
   }, [navigate]);
   
