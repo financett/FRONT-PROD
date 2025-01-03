@@ -121,6 +121,7 @@ const IncomeDashboard = () => {
       console.error('Error al obtener los datos', error);
     }
   }, [navigate]);
+  
 
   useEffect(() => {
     setTimeout(() => {
@@ -277,6 +278,7 @@ const IncomeDashboard = () => {
       await fetchIngresos();
       setShowModal(false);
       setIncomeToDelete(null);
+      
     } catch (error) {
       console.error('Error al eliminar el ingreso', error);
     }

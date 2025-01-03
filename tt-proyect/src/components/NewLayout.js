@@ -7,7 +7,10 @@ import FloatingTabIncome from './FloatingTabIncome';
 import FloatingTabFixedIncome from './FloatingTabFixedIncome'; // Importar el nuevo componente
 import ConfirmationModal from './ConfirmationModal';
 import JoinGroupModal from './JoinGroupModal';
+import axios from 'axios';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
+import FloatingTabCuota from './FloatingTabCuota'; // Importar el nuevo componente
+
 
 const NewLayout = () => {
   const [showFloatingTab, setShowFloatingTab] = useState(false);
@@ -24,14 +27,23 @@ const NewLayout = () => {
   const [misGrupos, setMisGrupos] = useState([]);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showJoinGroupModal, setShowJoinGroupModal] = useState(false);
+  const [hasMetas, setHasMetas] = useState(false);
+  const [hasAhorros, setHasAhorros] = useState(false);
+  const [hasDeudas, setHasDeudas] = useState(false);
+  const [showFloatingTabCuota, setShowFloatingTabCuota] = useState(false);
+  const [currentCuotaIndex, setCurrentCuotaIndex] = useState(0); // Índice de la cuota actual
+  const [cuotasProximas, setCuotasProximas] = useState([]); // Datos de las cuotas próximas
+
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    console.log("Token:", token);
     if (token) {
       const decodedToken = jwtDecode(token);
       const currentTime = Date.now() / 1000;
-
+  
       if (decodedToken.exp < currentTime) {
         localStorage.removeItem('token');
         navigate('/');
@@ -41,17 +53,25 @@ const NewLayout = () => {
     } else {
       navigate('/');
     }
-
+  
     const hasIncome = localStorage.getItem('hasIncome') === 'true';
     const showIncomeTab = localStorage.getItem('showFloatingTabIncome') === 'true';
-    const showFixedIncomeTab = localStorage.getItem('showFloatingTabFixedIncome') === 'true'; // Nueva bandera para ingresos fijos
-    const perteneceAGrupoLocal = localStorage.getItem('pertenece_a_grupo') === 'true';
-
-    setPerteneceAGrupo(perteneceAGrupoLocal);
-
-    const gruposUsuario = JSON.parse(localStorage.getItem('mis_grupos') || '[]');
-    setMisGrupos(gruposUsuario);
-
+    const showFixedIncomeTab = localStorage.getItem('showFloatingTabFixedIncome') === 'true';
+    const tieneCuotasProximas = localStorage.getItem('tieneCuotasProximas') === 'true'; // Asegúrate de esta comparación
+    const cuotas = JSON.parse(localStorage.getItem('cuotasProximas') || '[]');
+  
+    console.log("hasIncome:", hasIncome);
+    console.log("showIncomeTab:", showIncomeTab);
+    console.log("showFixedIncomeTab:", showFixedIncomeTab);
+    console.log("tieneCuotasProximas:", tieneCuotasProximas);
+    console.log("cuotasProximas:", cuotas);
+  
+    setPerteneceAGrupo(localStorage.getItem('pertenece_a_grupo') === 'true');
+    setMisGrupos(JSON.parse(localStorage.getItem('mis_grupos') || '[]'));
+    setHasMetas(localStorage.getItem('hasMetas') === 'true');
+    setHasAhorros(localStorage.getItem('hasAhorros') === 'true');
+    setHasDeudas(localStorage.getItem('hasDeudas') === 'true');
+  
     if (!hasIncome) {
       setShowFloatingTab(true);
     } else if (showIncomeTab) {
@@ -60,12 +80,57 @@ const NewLayout = () => {
       setFechaTerminoPeriodoNoFijo(localStorage.getItem('fechaTerminoPeriodoNoFijo') || '');
       setShowFloatingTabIncome(true);
     } else if (showFixedIncomeTab) {
-      setDescripcionIngresoFijo(localStorage.getItem('descripcionIngresoFijo') || ''); // Cargar descripción de ingresos fijos
-      setFechaUltimoIngresoFijo(localStorage.getItem('fechaUltimoIngresoFijo') || ''); // Cargar fecha de ingresos fijos
+      setDescripcionIngresoFijo(localStorage.getItem('descripcionIngresoFijo') || '');
+      setFechaUltimoIngresoFijo(localStorage.getItem('fechaUltimoIngresoFijo') || '');
       setFechaTerminoPeriodoFijo(localStorage.getItem('fechaTerminoPeriodoFijo') || '');
       setShowFloatingTabFixedIncome(true);
+    } else if (tieneCuotasProximas && cuotas.length > 0) {
+      console.log("Mostrando ventana flotante de cuotas");
+      setCuotasProximas(cuotas);
+      setShowFloatingTabCuota(true);
     }
   }, [navigate]);
+  
+  
+  
+
+  const handleSaveCuota = () => {
+    if (currentCuotaIndex < cuotasProximas.length - 1) {
+      setCurrentCuotaIndex((prevIndex) => prevIndex + 1); // Muestra la siguiente cuota
+    } else {
+      setShowFloatingTabCuota(false); // Oculta la ventana flotante
+      localStorage.setItem('showFloatingTabCuota', 'false'); // Actualiza el localStorage
+    }
+  };
+  
+
+  const verificarEstadoFinanciero = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('https://back-flask-production.up.railway.app/api/estado-financiero', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const { hasMetas, hasAhorros, hasDeudas } = response.data;
+
+      // Actualizar estados y localStorage
+      setHasMetas(hasMetas);
+      setHasAhorros(hasAhorros);
+      setHasDeudas(hasDeudas);
+
+      localStorage.setItem('hasMetas', hasMetas);
+      localStorage.setItem('hasAhorros', hasAhorros);
+      localStorage.setItem('hasDeudas', hasDeudas);
+    } catch (error) {
+      console.error('Error al verificar estado financiero:', error);
+    }
+  };
+
+  useEffect(() => {
+    verificarEstadoFinanciero();
+  }, []); // Llamar al cargar el componente
+
+  
 
   const handleSave = () => {
     setShowFloatingTab(false);
@@ -202,9 +267,21 @@ const NewLayout = () => {
                 <li>
                   <Link to="/dashboard/validar-datos-financieros">Registrar Meta</Link>
                 </li>
-                <li>
-                  <Link to="/dashboard/metas-financieras">Metas Financieras</Link>
-                </li>
+                {hasMetas && (
+                  <li>
+                    <Link to="/dashboard/metas-financieras">Metas Financieras</Link>
+                  </li>
+                )}
+                {hasDeudas && (
+                  <li>
+                    <Link to="/dashboard/deudas">Deudas</Link>
+                  </li>
+                )}
+                {hasAhorros && (
+                  <li>
+                    <Link to="/dashboard/ahorros">Ahorros</Link>
+                  </li>
+                )}
               </ul>
             </li>
             <li className={`menu-item ${activeMenu === 'cursos' ? 'active' : ''}`}>
@@ -245,6 +322,16 @@ const NewLayout = () => {
 
             />
           )}
+          {showFloatingTabCuota && cuotasProximas.map((cuota, index) => (
+            <FloatingTabCuota
+              key={index}
+              descripcionDeuda={cuota.Descripcion_Deuda}
+              fechaLimite={cuota.Fecha_Limite}
+              monto={cuota.Cuota}
+              idCuota={cuota.ID_Deuda_Cuota}
+              onClose={() => setShowFloatingTabCuota(false)}
+            />
+          ))}
           <Outlet />
         </main>
       </div>
