@@ -100,10 +100,10 @@ const NewLayout = () => {
 
   const handleSaveCuota = () => {
     if (currentCuotaIndex < cuotasProximas.length - 1) {
-      setCurrentCuotaIndex((prevIndex) => prevIndex + 1); // Muestra la siguiente cuota
+      setCurrentCuotaIndex((prevIndex) => prevIndex + 1);
     } else {
-      setShowFloatingTabCuota(false); // Oculta la ventana flotante
-      localStorage.setItem('showFloatingTabCuota', 'false'); // Actualiza el localStorage
+      setShowFloatingTabCuota(false);
+      localStorage.setItem('showFloatingTabCuota', 'false'); // Aseguramos que no vuelva a aparecer
     }
   };
   
